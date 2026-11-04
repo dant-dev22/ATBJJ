@@ -1,7 +1,7 @@
 /**
  * Cambia a `true` si vuelves a abrir el registro público.
  */
-export const REGISTRO_ABIERTO = false
+export const REGISTRO_ABIERTO = true
 
 /**
  * Cambia a `true` si quieres volver a publicar la lista final de participantes.
