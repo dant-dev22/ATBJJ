@@ -3,8 +3,10 @@
 > Servicio "Torneos" (pantalla de administración + registro de competidores/alumnos + CRUD)
 > dentro de una futura cadena de microservicios SaaS multi-organización.
 >
-> Repos analizados: `aztlan-2026` (Next 14) y `aztlan-2026-api` (Flask 3).
+> Repos analizados: `ATBJJ` (Next 14) y `ATBJJ-api` (Flask 3).
 > Equipo: 2 desarrolladores. Infra actual: 1 VPS (Nginx + PM2 + Gunicorn) y MySQL.
+>
+> **Nomenclatura:** los repos de GitHub se renombraron a `ATBJJ` / `ATBJJ-api`; los slugs antiguos siguen redirigiendo. Los dominios del producto (`torneoaztlan.com` / `.cloud`) y las rutas del VPS no cambian.
 >
 > **Versión publicada en el repositorio:** los datos de infraestructura (host/IP del VPS y rutas internas) fueron sustituidos por marcadores como `<HOST_VPS>`. La versión completa, con los valores reales, se mantiene fuera de GitHub.
 
@@ -54,7 +56,7 @@ El valor de negocio (registro + admin + CRUD de torneos) ya funciona y es reutil
 | **Sin multitenancy** | Todo el esquema | No hay `organizations` ni `tenant_id` |
 | **Tipos duplicados a mano** | `app/lib/api.ts` | Divergen del backend |
 | **Sin tests** | Ambos repos | Refactor sin red de seguridad |
-| **`venv` versionado en la API** | Repo `aztlan-2026-api` (el `venv/` está en disco pese a figurar en `.gitignore`, se commiteó antes) | Fuerza el hack `git checkout origin/main -- <rutas>` en el VPS |
+| **`venv` versionado en la API** | Repo `ATBJJ-api` (el `venv/` está en disco pese a figurar en `.gitignore`, se commiteó antes) | Fuerza el hack `git checkout origin/main -- <rutas>` en el VPS |
 | **Sin staging** | Solo `torneoaztlan.cloud` | No hay forma de probar sin arriesgar producción |
 | **Secretos en `.env` del server** | `.env.production`, `.env` API | Sin gestión centralizada |
 
@@ -75,8 +77,8 @@ El valor de negocio (registro + admin + CRUD de torneos) ya funciona y es reutil
 flowchart TB
   U["Usuarios<br/>organizador / operador / competidor"] --> NG["Nginx + SSL<br/>(TLS, routing, rate limit)"]
 
-  NG --> WEB["aztlan-2026-web<br/>Next.js 14"]
-  NG --> GW["API /v1 — ESTE SERVICIO<br/>aztlan-2026-api (Flask)<br/>torneos: admin + registro + CRUD"]
+  NG --> WEB["ATBJJ-web<br/>Next.js 14"]
+  NG --> GW["API /v1 — ESTE SERVICIO<br/>ATBJJ-api (Flask)<br/>torneos: admin + registro + CRUD"]
 
   WEB -->|"/api/v1/*"| GW
   WEB -->|"login OIDC"| ID
@@ -200,18 +202,18 @@ Con 2 personas y una dirección de microservicios, el polyrepo + un **paquete de
 
 | Repo | Contenido | Deploy |
 |---|---|---|
-| `aztlan-2026-web` | Frontend Next.js (este servicio) | PM2 → luego Docker |
-| `aztlan-2026-api` | API Flask de torneos + **sus migraciones Alembic** | Gunicorn → luego Docker |
-| `aztlan-2026-contracts` | `openapi.yaml` (fuente de verdad) + tipos TS generados + esquemas | npm/paquete versionado |
-| `aztlan-2026-infra` | `docker-compose*.yml`, `nginx/`, plantillas de GitHub Actions, scripts, `.env.example` | N/A (config) |
-| *(futuro)* `aztlan-identity` | Servicio de identidad | — |
-| *(futuro)* `aztlan-billing` | Facturación | — |
+| `ATBJJ-web` | Frontend Next.js (este servicio) | PM2 → luego Docker |
+| `ATBJJ-api` | API Flask de torneos + **sus migraciones Alembic** | Gunicorn → luego Docker |
+| `ATBJJ-contracts` | `openapi.yaml` (fuente de verdad) + tipos TS generados + esquemas | npm/paquete versionado |
+| `ATBJJ-infra` | `docker-compose*.yml`, `nginx/`, plantillas de GitHub Actions, scripts, `.env.example` | N/A (config) |
+| *(futuro)* `ATBJJ-identity` | Servicio de identidad | — |
+| *(futuro)* `ATBJJ-billing` | Facturación | — |
 
-> **Sobre `aztlan-2026-db`:** **no** recomiendo un repo separado que "posea" las migraciones. En microservicios cada servicio **es dueño de su esquema** y sus migraciones viven junto al código (`aztlan-2026-api/migrations/`). Un repo `db` central acopla servicios justo cuando queremos desacoplarlos. Si se necesita un lugar para *baselines SQL, seeds y backups*, que sea parte de `aztlan-2026-infra`, no la fuente de migraciones.
+> **Sobre `ATBJJ-db`:** **no** recomiendo un repo separado que "posea" las migraciones. En microservicios cada servicio **es dueño de su esquema** y sus migraciones viven junto al código (`ATBJJ-api/migrations/`). Un repo `db` central acopla servicios justo cuando queremos desacoplarlos. Si se necesita un lugar para *baselines SQL, seeds y backups*, que sea parte de `ATBJJ-infra`, no la fuente de migraciones.
 
 ### 4.3 Convención de nombres y ramas
 
-- Repos: `aztlan-2026-<componente>` (kebab-case).
+- Repos: `ATBJJ-<componente>` (kebab-case).
 - Ramas: `main` (producción), `staging` (pre-prod), `feature/ABC-123-descripcion`, `fix/...`, `chore/...`. Tags de release: `web-v1.3.0`, `api-v1.3.0`, `contracts-v1.1.0`.
 - PRs siempre contra `staging`; `staging`→`main` con aprobación manual.
 - Commits: Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`).
@@ -224,7 +226,7 @@ Con 2 personas y una dirección de microservicios, el polyrepo + un **paquete de
 ### 5.1 Estructura de carpetas de la API
 
 ```
-aztlan-2026-api/
+ATBJJ-api/
   app/
     __init__.py          # create_app()
     config.py            # pydantic-settings por entorno
@@ -390,14 +392,14 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
   api:
-    build: ../aztlan-2026-api
+    build: ../ATBJJ-api
     env_file: .env
     depends_on:
       db: { condition: service_healthy }
     volumes: ["uploads:/app/uploads"]
     command: gunicorn -w 3 -b 0.0.0.0:5000 "app:app"
   web:
-    build: ../aztlan-2026-web
+    build: ../ATBJJ-web
     env_file: .env
     depends_on: [api]
 volumes:
@@ -419,7 +421,7 @@ volumes:
 | Datos | `seed.py` con 20 competidores, 1 torneo, 1 org, varios equipos/sucursales |
 | Correo | `EMAIL_ENABLED=false` + **Mailpit/MailHog** (contenedor) para ver correos sin enviarlos. Nunca Gmail real |
 | Uploads | Volumen `uploads_staging` aparte |
-| Reinicio | `docker compose -p aztlan-staging up -d --build && make -C ../aztlan-2026-api migrate` |
+| Reinicio | `docker compose -p aztlan-staging up -d --build && make -C ../ATBJJ-api migrate` |
 | Reset | `docker compose -p aztlan-staging down -v && make seed` |
 | Protección | Basic-auth de Nginx (`htpasswd`) para que no sea público |
 | Cómo probar sin riesgo | Staging apunta a `staging...` y DB propia; los flujos E2E (Playwright) corren en CI contra staging efímero |
@@ -430,7 +432,7 @@ volumes:
 
 ### 9.1 Flujos de GitHub Actions por repo
 
-**`aztlan-2026-web` — `.github/workflows/ci.yml`:**
+**`ATBJJ-web` — `.github/workflows/ci.yml`:**
 
 ```yaml
 name: ci
@@ -449,7 +451,7 @@ jobs:
       - run: npm run test --if-present
 ```
 
-**`aztlan-2026-api` — `.github/workflows/ci.yml`:**
+**`ATBJJ-api` — `.github/workflows/ci.yml`:**
 
 ```yaml
 name: ci
@@ -547,7 +549,7 @@ Secretos GitHub (repository/environment secrets): `VPS_HOST`, `VPS_USER`, `VPS_S
 | **1. Asegurar** (crítico) | Cerrar huecos antes de vender | Auth real en API (JWT provisional), CORS a lista blanca, cierre del puerto `:5000`, `middleware.ts` que protege `/admin`, rate limiting | Petición anónima a un endpoint protegido→401; desde origen ajeno→bloqueado; `/admin` no carga sin sesión | Medio | Feature flag `AUTH_REQUIRED`; apagar = comportamiento viejo |
 | **2. Staging + Alembic + Docker** | Paridad y datos seguros | `docker-compose.yml`, `alembic init` + baseline, staging con DB propia + Mailpit, backups cron | Migración Alembic corre en staging y prod; staging accesible con basic-auth; restore probado | Medio | Volver a PM2/Gunicorn; Alembic no rompe prod si no se corre |
 | **3. Multi-tenant (datos)** | Aislar por organización | `organizations`/`tournaments`/`admin_users`; `tenant_id` en tablas; backfill; `TenantAwareSession`; config por tenant en DB (adiós `registroConfig.ts`) | Test negativo de aislamiento pasa; registro abierto/cerrado se cambia desde DB sin redeploy; conteos intactos | **Alto** | Columnas aditivas + flag `USE_TENANT_MODEL`; backup |
-| **4. Homogeneizar + contrato** | Unificar servicio y contrato | `/api/v1`, formato de errores, paginación, `aztlan-2026-contracts` (OpenAPI + tipos TS), reemplazo de tipos a mano, tests mínimos | Front usa tipos generados; `openapi.yaml` valida en CI; pytest/Vitest/Playwright verdes | Medio | Mantener alias `/registro` legacy 1 release |
+| **4. Homogeneizar + contrato** | Unificar servicio y contrato | `/api/v1`, formato de errores, paginación, `ATBJJ-contracts` (OpenAPI + tipos TS), reemplazo de tipos a mano, tests mínimos | Front usa tipos generados; `openapi.yaml` valida en CI; pytest/Vitest/Playwright verdes | Medio | Mantener alias `/registro` legacy 1 release |
 | **5. Identidad compartida + tenant en subdominio** | Preparar la cadena | Servicio de identidad (OIDC) reemplaza el login casero; JWT validado por JWKS; `acme.torneoaztlan.cloud`; entitlements/feature flags por plan | Un tenant nuevo funciona en su subdominio solo; los demás servicios validan el mismo token | Alto | Mantener login local como fallback hasta corte |
 | **6. Vender (onboarding)** | Volver el servicio reutilizable y vendible | Alta self-serve de organización, planes/entitlements, hooks hacia facturación (stub), aislamiento de storage por tenant | Un organizador externo se registra, crea su torneo y opera sin intervención | Medio | Gating por plan + onboarding manual temporal |
 
